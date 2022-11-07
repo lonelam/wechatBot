@@ -33,6 +33,7 @@ async function onLogin(user) {
 
   // 登陆后创建定时任务
   await initDay();
+  await initTasks();
 }
 
 // 登出
@@ -83,7 +84,7 @@ async function onMessage(msg) {
           console.log('天行对接的图灵机器人回复：', reply);
         }
         try {
-          await delay(2000);
+          await delay(2000 * Math.random());
           await contact.say(reply);
         } catch (e) {
           console.error(e);
@@ -101,17 +102,17 @@ async function initDay() {
     console.log('你的贴心小助理开始工作啦！');
     let logMsg;
     let contact =
-      (await bot.Contact.find({ name: config.NICKNAME })) ||
-      (await bot.Contact.find({ alias: config.NAME })); // 获取你要发送的联系人
+      (await bot.Contact.find({ alias: config.NAME })) ||
+      (await bot.Contact.find({ name: config.NICKNAME })); // 获取你要发送的联系人
     let one = await superagent.getOne(); //获取每日一句
     let weather = await superagent.getTXweather(); //获取天气信息
     let today = await untils.formatDate(new Date()); //获取今天的日期
-    let memorialDay = untils.getDay(config.MEMORIAL_DAY); //获取纪念日天数
+    let memorialDay = untils.getDay(config.MEMORIAL_DAY) + 1; //获取纪念日天数
     let sweetWord = await superagent.getSweetWord();
 
     // 你可以修改下面的 str 来自定义每日说的内容和格式
     // PS: 如果需要插入 emoji(表情), 可访问 "https://getemoji.com/" 复制插入
-    let str = `${today}\n我们在一起的第${memorialDay}天\n\n元气满满的一天开始啦,要开心噢^_^\n\n今日天气\n${weather.weatherTips}\n${weather.todayWeather}\n每日一句:\n${one}\n\n每日土味情话：\n${sweetWord}\n\n————————最爱你的我`;
+    let str = `${today}\n我们在一起的第${memorialDay}天\n\n元气满满的一天开始啦,要开心噢^_^\n\n今日天气\n${weather.weatherTips}\n${weather.todayWeather}\n每日一句:\n${one}\n\n每日土味情话：\n${sweetWord}\n\n————————最爱妹妹的来`;
     try {
       logMsg = str;
       await delay(2000);
@@ -123,6 +124,33 @@ async function initDay() {
   });
 }
 
+// 创建其他定时任务
+async function initTasks() {
+  console.log(`设定其他任务`);
+
+  config.tasks.forEach((task, index) => {
+    schedule.setSchedule(task.date, async () => {
+      console.log('开始任务', index);
+      let logMsg;
+      let contact =
+        (await bot.Contact.find({ name: task.nick })) ||
+        (await bot.Contact.find({ alias: task.alias })); // 获取你要发送的联系人
+      let sweetWord = await superagent.getSweetWord();
+
+      // 你可以修改下面的 str 来自定义每日说的内容和格式
+      // PS: 如果需要插入 emoji(表情), 可访问 "https://getemoji.com/" 复制插入
+      let str = `${task.emoji}现在是${task.time}\n${sweetWord}\n--------\n${task.text}`;
+      try {
+        logMsg = str;
+        await delay(2000);
+        await contact.say(str); // 发送消息
+      } catch (e) {
+        logMsg = e.message;
+      }
+      console.log(logMsg);
+    });
+  });
+}
 const bot = WechatyBuilder.build({
   name: 'WechatEveryDay',
   puppet: 'wechaty-puppet-wechat', // 如果有token，记得更换对应的puppet
