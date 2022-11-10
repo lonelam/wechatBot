@@ -21,6 +21,7 @@ function req({url, method, params, data, cookies, spider = false, platform = 'tx
                 if (err) {
                     console.log('请求出错', err)
                     reject(err)
+                    return;
                 }
                 if (spider) { // 如果是爬取内容，直接返回页面html
                     resolve(response.text)

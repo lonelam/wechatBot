@@ -40,7 +40,11 @@ async function onLogin(user) {
 function onLogout(user) {
   console.log(`小助手${user} 已经登出`);
 }
-
+// 停止
+async function onStop() {
+  console.log(`小助手${user} 已经停止`);
+  startBot();
+}
 // 监听对话
 async function onMessage(msg) {
   const contact = msg.talker(); // 发消息人
@@ -163,8 +167,15 @@ bot.on('scan', onScan);
 bot.on('login', onLogin);
 bot.on('logout', onLogout);
 bot.on('message', onMessage);
+bot.on('stop', onStop);
+function startBot() {
+  bot
+    .start()
+    .then(() => console.log('开始登陆微信'))
+    .catch((e) => {
+      console.error('异常退出', e);
+      startBot();
+    });
+}
 
-bot
-  .start()
-  .then(() => console.log('开始登陆微信'))
-  .catch((e) => console.error(e));
+startBot();
