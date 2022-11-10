@@ -7,6 +7,7 @@ const schedule = require('./schedule/index');
 const config = require('./config/index');
 const untils = require('./utils/index');
 const superagent = require('./superagent/index');
+const { exit } = require('process');
 
 // 延时函数，防止检测出类似机器人行为操作
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -44,6 +45,14 @@ function onLogout(user) {
 async function onStop() {
   console.log(`小助手${user} 已经停止`);
   startBot();
+}
+/**
+ * 
+ * @param {import('gerror').GError} error 
+ */
+function onError(error) {
+  console.log(`小助手${user}异常, 直接exit: ${error}`);
+  exit(-1);
 }
 // 监听对话
 async function onMessage(msg) {
@@ -168,13 +177,17 @@ bot.on('login', onLogin);
 bot.on('logout', onLogout);
 bot.on('message', onMessage);
 bot.on('stop', onStop);
-function startBot() {
-  bot
+bot.on('error', onError);
+async function startBot() {
+  await bot.reset();
+  await bot
     .start()
     .then(() => console.log('开始登陆微信'))
     .catch((e) => {
       console.error('异常退出', e);
-      startBot();
+      setTimeout(() => {
+        startBot();
+      })
     });
 }
 
